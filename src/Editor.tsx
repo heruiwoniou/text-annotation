@@ -155,16 +155,21 @@ function InlineEditor() {
                 children: [],
               };
               const windSelection = window.getSelection();
-              const text = windSelection?.toString();
+              const text = windSelection?.toString() as any;
+              const endLength = text.length - text.trimEnd().length;
+              const startLength = text.length - text.trimStart().length;
 
-              if (text && selection && editor && text.trimEnd().length) {
-                editor.selection = {
-                  ...selection,
-                  focus: {
-                    ...selection.focus,
-                    offset: selection.anchor.offset + text.trimEnd().length,
-                  },
-                };
+              if (text && selection && editor && text.trim().length) {
+                let clone = JSON.parse(JSON.stringify(selection));
+                if (clone.anchor.offset < clone.focus.offset) {
+                  clone.anchor.offset += startLength;
+                  clone.focus.offset -= endLength;
+                }
+                if (clone.anchor.offset > clone.focus.offset) {
+                  clone.anchor.offset -= endLength;
+                  clone.focus.offset += startLength
+                }
+                Transforms.select(editor, clone)
                 Transforms.unwrapNodes(editor, {
                   at: [],
                   match: (node, path) =>
