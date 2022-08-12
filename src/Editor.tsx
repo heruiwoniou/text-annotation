@@ -3,8 +3,6 @@ import { css } from "@emotion/react";
 import {
   Editable,
   withReact,
-  useSlate,
-  useSelected,
   Slate,
   RenderElementProps,
   RenderLeafProps,
@@ -148,25 +146,37 @@ function InlineEditor() {
             renderElement={(props) => <Element {...props} />}
             renderLeaf={(props) => <Text {...props} />}
             placeholder="Enter some text..."
-            onSelectCapture={(...args) => {
+            onSelectCapture={() => {
               const { selection } = editor;
               const isCollapsed = selection && Range.isCollapsed(selection);
               if (isCollapsed) return;
               const button: ButtonElement = {
                 type: "button",
-                children: isCollapsed ? [{ text: "Edit me!" }] : [],
+                children: [],
               };
-              Transforms.unwrapNodes(editor, {
-                at: [],
-                match: (node, path) =>
-                  !Editor.isEditor(node) &&
-                  "type" in node &&
-                  node.type === "button",
-                mode: "all",
-              });
+              const windSelection = window.getSelection();
+              const text = windSelection?.toString();
 
-              Transforms.wrapNodes(editor, button, { split: true });
-              Transforms.collapse(editor, { edge: "end" });
+              if (text && selection && editor && text.trimEnd().length) {
+                editor.selection = {
+                  ...selection,
+                  focus: {
+                    ...selection.focus,
+                    offset: selection.anchor.offset + text.trimEnd().length,
+                  },
+                };
+                Transforms.unwrapNodes(editor, {
+                  at: [],
+                  match: (node, path) =>
+                    !Editor.isEditor(node) &&
+                    "type" in node &&
+                    node.type === "button",
+                  mode: "all",
+                });
+
+                Transforms.wrapNodes(editor, button, { split: true });
+                Transforms.collapse(editor, { edge: "end" });
+              }
             }}
           />
         </Slate>
