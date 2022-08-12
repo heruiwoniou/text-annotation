@@ -27,7 +27,7 @@ const initialValue: Descendant[] = [
         text: "In addition to block nodes, you can create inline nodes. Here is a ",
       },
       {
-        text: ", and here is a more unusual inline: an ",
+        text: ", and here is a more   unusual inline: an ",
       },
       {
         type: "button",
@@ -160,16 +160,24 @@ function InlineEditor() {
               const startLength = text.length - text.trimStart().length;
 
               if (text && selection && editor && text.trim().length) {
-                let clone = JSON.parse(JSON.stringify(selection));
-                if (clone.anchor.offset < clone.focus.offset) {
-                  clone.anchor.offset += startLength;
-                  clone.focus.offset -= endLength;
+                if (selection.anchor.offset < selection.focus.offset) {
+                  if (startLength) {
+                    Transforms.move(editor, {distance: startLength, unit: 'offset', reverse: false, edge: 'anchor'})
+                  }
+                  if (endLength) {
+                    Transforms.move(editor, {distance: endLength, unit: 'offset', reverse: true, edge: 'focus'})
+                  }
+                  
                 }
-                if (clone.anchor.offset > clone.focus.offset) {
-                  clone.anchor.offset -= endLength;
-                  clone.focus.offset += startLength
-                }
-                Transforms.select(editor, clone)
+                if (selection.anchor.offset > selection.focus.offset) {
+                  if (startLength) {
+                    Transforms.move(editor, {distance: startLength, unit: 'offset', reverse: false, edge: 'focus'})
+                  }
+                  if (endLength) {
+                    Transforms.move(editor, {distance: endLength, unit: 'offset', reverse: true, edge: 'anchor'})
+                  }
+                  
+                }                
                 Transforms.unwrapNodes(editor, {
                   at: [],
                   match: (node, path) =>
